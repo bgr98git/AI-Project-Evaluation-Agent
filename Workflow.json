@@ -1,0 +1,563 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1zIKQYhUuz_Yb8gLOEvG0IkBF33EYOWgWEczjLJ_0C58",
+          "mode": "list",
+          "cachedResultName": "Project Submission Responses",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zIKQYhUuz_Yb8gLOEvG0IkBF33EYOWgWEczjLJ_0C58/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 853409393,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zIKQYhUuz_Yb8gLOEvG0IkBF33EYOWgWEczjLJ_0C58/edit#gid=853409393"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        64
+      ],
+      "id": "5b7c4d57-d90c-474f-af68-e698144d5390",
+      "name": "Get Student data1",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "dwlIoEp6d0n8wk2k",
+          "name": "Google Sheets Trigger OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -16,
+        64
+      ],
+      "id": "04c2dbc0-cbd0-41af-8164-d0542c327db3",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "lddescription",
+              "cssSelector": "meta[name=\"description\"]",
+              "returnValue": "attribute",
+              "attribute": "content"
+            },
+            {
+              "key": "ldimage",
+              "cssSelector": "meta[property=\"og:image\"]",
+              "returnValue": "attribute",
+              "attribute": "content"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        592,
+        176
+      ],
+      "id": "08caedf2-d34a-43d8-aecf-5a9594c286a5",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "64ba0cd9-9efb-4111-9e26-dbb5cfad36a2",
+              "leftValue": "={{ $json['Demo Video Link '] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        -32
+      ],
+      "id": "be8202ca-4ddd-4f0d-9719-504fd68e83f9",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json['  LinkedIn Post URL  '] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        336,
+        176
+      ],
+      "id": "0d655a3b-5455-41f6-bf15-2beb1e92d205",
+      "name": "fetchlinkdinurl"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cloudinary.com/v1_1/ddxklp81b/video/upload",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{\"https://drive.google.com/uc?export=download&id=\" + $json[\"Demo Video Link \"].split(\"/d/\")[1].split(\"/\")[0]}}"
+            },
+            {
+              "name": "upload_preset",
+              "value": "student_video_upload"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        416,
+        -48
+      ],
+      "id": "a2584186-9bc5-421a-b349-c08c3af93ef8",
+      "name": "cloudnarydownloadvideo"
+    },
+    {
+      "parameters": {
+        "jsCode": "const videoUrl = $node[\"cloudnarydownloadvideo\"].json[\"secure_url\"];\n\n// choose timestamps\nconst times = [5, 12, 18,23,28];\n\n// create and combine frame URLs\nconst frameUrls = times.map(t => {\n  let baseUrl = videoUrl.replace(\".mp4\", \"\");\n  return baseUrl.replace(\"/upload/\", `/upload/so_${t}/`) + \".jpg\";\n});\n\n// return ONLY combined screenshots\nreturn [\n  {\n    json: {\n      frame_urls: frameUrls\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        -48
+      ],
+      "id": "35aa6c00-de79-4663-8ea4-23a8ce8a3770",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "83457767-f502-4376-bed9-36c69729bba5",
+              "name": "  Student Full Name:  ",
+              "value": "={{ $('Get Student data1').item.json['  Student Full Name:  '] }}",
+              "type": "string"
+            },
+            {
+              "id": "e2ace0ba-1f59-478b-93fb-a00d2f9ea640",
+              "name": "  Project Title   ",
+              "value": "={{ $('Get Student data1').item.json['  Project Title   '] }}",
+              "type": "string"
+            },
+            {
+              "id": "d85f824d-92ab-4a6d-8149-3aad6136f7af",
+              "name": "Competition Category ",
+              "value": "={{ $('Get Student data1').item.json['Competition Category '] }}",
+              "type": "string"
+            },
+            {
+              "id": "4d7239e0-2072-4247-8511-98eca8c96fdd",
+              "name": "Project Description (Brief)  ",
+              "value": "={{ $('Get Student data1').item.json['Project Description (Brief)  '] }}",
+              "type": "string"
+            },
+            {
+              "id": "966137d9-f0cd-45d1-953a-7ceadea83ac3",
+              "name": "linkdindescrption",
+              "value": "={{ $json.lddescription }}",
+              "type": "string"
+            },
+            {
+              "id": "73b905cf-14b2-4480-b90a-362b705ea07f",
+              "name": "ldpostimage",
+              "value": "={{ $json.ldimage }}",
+              "type": "string"
+            },
+            {
+              "id": "35856ad5-a18a-49b1-b15d-4b82cc4dfe40",
+              "name": "video_screenshot",
+              "value": "={{ $node[\"Code in JavaScript\"]?.json[\"frame_urls\"] || [] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        800,
+        64
+      ],
+      "id": "e98e2727-1294-4ae4-a2e2-988f33977799",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert judge evaluating student AI projects.\n\nEvaluate the project based on the following criteria (Total = 50 marks):\n\n1. Innovation & Creativity (10 marks) → Use LinkedIn post + idea originality\n2. Technical Implementation (10 marks) → Use project description + inferred system design\n3. Practical Use / Real-world Application (10 marks) → Based on problem-solving value\n4. Presentation & Clarity (10 marks) → Use LinkedIn post + visual clarity from images/video\n5. Overall Impact (10 marks) → Based on combined understanding of all inputs\n\n---\n\nProject Details:\nStudent_name: {{ $json['  Student Full Name:  '] }}\nTitle: {{ $json['  Project Title   '] }}\nCategory: {{ $json[\"Competition Category \"] }}\nDescription: {{ $json['Project Description (Brief)  '] }}\n\n---\n\nLinkedIn Post Content:\n{{ $json[\"linkdindescrption\"] }}\n\nLinkedIn Image (Visual Evidence):\n{{ $json.ldpostimage }}\n\nVideo Screenshots (Project Demo Frames):\n{{ $json[\"video_screenshot\"] }}\n\n---\n\nSTRICT INSTRUCTIONS:\n\n* You MUST use ALL inputs (description + LinkedIn + images + video frames)\n* Do NOT ignore LinkedIn or video screenshots\n* If visual data is unclear, make reasonable assumptions from context\n* Give realistic scores (avoid giving all high or all low marks)\n* Feedback must reference at least ONE of:\n\n  * LinkedIn post\n  * Video demo\n  * Project idea\n\n---\n\nOutput strictly in JSON format:\n\n{\n\"student_name\": \"text\",\n\"innovation\": number,\n\"technical\": number,\n\"practical\": number,\n\"presentation\": number,\n\"impact\": number,\n\"total\": number,\n\"feedback\": \"@student_name <2-line feedback mentioning LinkedIn or demo>\"\n}\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        992,
+        64
+      ],
+      "id": "9351c909-fc68-4e11-b7b4-ccb2049aad5c",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        720,
+        432
+      ],
+      "id": "f25a9876-6b80-423c-8dac-03aa80c49767",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "usTw6JSw5We4nJId",
+          "name": "Google Gemini(PaLM) Api account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let text = $json[\"text\"] || $json[\"response\"] || \"\";\n\n// remove ```json ``` wrappers\ntext = text.replace(/```json/g, \"\").replace(/```/g, \"\").trim();\n\n// parse to JSON\nlet parsed;\ntry {\n  parsed = JSON.parse(text);\n} catch (e) {\n  parsed = {};\n}\n\nreturn [\n  {\n    json: parsed\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        64
+      ],
+      "id": "d6ae0c08-5b6f-4ee3-bec5-9d6d10760839",
+      "name": "json_parse_result"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1zIKQYhUuz_Yb8gLOEvG0IkBF33EYOWgWEczjLJ_0C58",
+          "mode": "list",
+          "cachedResultName": "Project Submission Responses",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zIKQYhUuz_Yb8gLOEvG0IkBF33EYOWgWEczjLJ_0C58/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 616724489,
+          "mode": "list",
+          "cachedResultName": "score",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zIKQYhUuz_Yb8gLOEvG0IkBF33EYOWgWEczjLJ_0C58/edit#gid=616724489"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "StudentName": "={{ $json.student_name }}",
+            "innovation": "={{ $json.innovation }}",
+            "technical_complexity": "={{ $json.technical }}",
+            " practical": "={{ $json.practical }}",
+            "presentation": "={{ $json.presentation }}",
+            "impact": "={{ $json.impact }}",
+            "total": "={{ $json.total }}",
+            "feedback": "={{ $json.feedback }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "StudentName",
+              "displayName": "StudentName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "innovation",
+              "displayName": "innovation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "technical_complexity",
+              "displayName": "technical_complexity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " practical",
+              "displayName": " practical",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "presentation",
+              "displayName": "presentation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "impact",
+              "displayName": "impact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "total",
+              "displayName": "total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "feedback",
+              "displayName": "feedback",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1536,
+        240
+      ],
+      "id": "5cb1587b-1e01-4e01-a28c-44a14332e096",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rVZ7eFN06DEb7Zry",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get Student data1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "fetchlinkdinurl",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fetchlinkdinurl": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "cloudnarydownloadvideo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cloudnarydownloadvideo": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "json_parse_result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "json_parse_result": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "65fd19db-b160-4c86-a30c-720ca9fc93f6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c45ec984d4824b6ddcba01c7db44f825a691e4cc312b8341397e0107c193c5a2"
+  },
+  "id": "6OaQCXIMR22QN607",
+  "tags": []
+}
